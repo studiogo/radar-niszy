@@ -29,13 +29,18 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
 
 
 def _fb_cookies():
-    """Zalogowana sesja FB z Chrome (bezobsługowo). Zwraca (lista_cookies, zalogowany?)."""
-    import browser_cookie3 as bc3
-    cj = bc3.chrome(domain_name="facebook.com")
-    out = [{"name": c.name, "value": c.value, "domain": c.domain or ".facebook.com",
-            "path": c.path or "/"} for c in cj]
-    have = {c["name"] for c in out}
-    return out, ("c_user" in have and "xs" in have)
+    """Zalogowana sesja FB z Chrome (bezobsługowo). Zwraca (lista_cookies, zalogowany?).
+    KAŻDY błąd (brak Chrome, nie da się odszyfrować ciasteczek na Windows, brak browser_cookie3)
+    → ([], False) = traktuj jak 'nie zalogowany'; kanał zostanie po cichu pominięty, nie wywali."""
+    try:
+        import browser_cookie3 as bc3
+        cj = bc3.chrome(domain_name="facebook.com")
+        out = [{"name": c.name, "value": c.value, "domain": c.domain or ".facebook.com",
+                "path": c.path or "/"} for c in cj]
+        have = {c["name"] for c in out}
+        return out, ("c_user" in have and "xs" in have)
+    except Exception:
+        return [], False
 
 
 def discover_groups(nisza, n=3):
@@ -133,7 +138,9 @@ def main():
     try:
         out, log = run(urls, label, a.max_postow, headless=not a.widoczna)
     except Exception as e:
-        print(json.dumps({"error": str(e), "hint": "pip install seleniumbase browser_cookie3 + Chrome zalogowany w FB"}, ensure_ascii=False)); sys.exit(1)
+        # Graceful skip — Facebook NIGDY nie wywala całego researchu (brak Chrome/seleniumbase/sesji FB).
+        print(json.dumps({"n": 0, "log": f"Facebook pominięty: {str(e)[:80]}", "sygnaly": []}, ensure_ascii=False))
+        return
     res = {"n": len(out), "grupy": urls, "log": log, "sygnaly": out}
     if a.out_file:
         from pathlib import Path
