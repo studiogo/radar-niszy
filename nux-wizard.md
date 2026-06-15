@@ -92,13 +92,18 @@ Dla `missing_other` (deno, Chrome — nie z pip) pokaż komendę z `install_cmds
 Zadaj pytanie spokojnym tonem (bez straszenia):
 
 > „Narzędzie może też zaglądać do **publicznych grup na Facebooku** — to dobre źródło
-> problemów ludzi. Czyta z Twojego konta zalogowanego w Chrome, więc wcześniej musisz być
-> na nim zalogowany w przeglądarce. Widzi tylko grupy publiczne/widoczne.
+> problemów ludzi. Widzi tylko grupy publiczne/widoczne.
 > Drobna uwaga: automatyczne przeszukiwanie Facebooka jest niezgodne z jego regulaminem —
 > jest **niewielkie ryzyko blokady konta**, głównie gdybyś używał narzędzia bardzo intensywnie.
 > Włączyć szukanie na Facebooku? — [tak / nie]"
 
-- **tak** → `FB_ENABLED=true`
+- **tak** → `FB_ENABLED=true`. Następnie **jednorazowe logowanie** (potrzebne zwłaszcza na Windows,
+  gdzie nowy Chrome nie pozwala czytać sesji z zewnątrz): powiedz userowi i uruchom
+  `<PY> bin/fb_keyless.py --login` — otworzy się okno, user loguje się do Facebooka raz; profil
+  zostaje zapamiętany i kolejne zbieranie działa samo. Komunikat dla usera:
+  > „Żeby Facebook działał, otworzę okno — zaloguj się tam raz do Facebooka. Zapamiętam to i więcej
+  > nie będę pytać."
+  (Na Macu/Linuksie logowanie zwykle nie jest potrzebne — narzędzie czyta sesję z Twojego Chrome.)
 - **nie** → `FB_ENABLED=false`
 
 ## KROK 4 — Google Maps + miasto (best-effort) — PYTANIE C

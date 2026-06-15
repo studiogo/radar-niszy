@@ -1,37 +1,40 @@
 #!/usr/bin/env python3
 """
-fb_keyless.py — posty grup Facebook BEZ klucza/Apify (auto-cookies + seleniumbase UC headless).
+fb_keyless.py — posty publicznych grup Facebooka BEZ klucza/Apify (seleniumbase UC headless).
 
-⚠️ OSTRZEŻENIE: automat na ZALOGOWANYM koncie FB łamie regulamin FB → ryzyko BANU konta usera.
-KANAŁ OPCJONALNY, domyślnie WYŁĄCZONY, świadomy opt-in. Twoich kluczy nie ma — to sesja usera.
+Dwie ścieżki uwierzytelnienia (cross-platform):
+  ŚCIEŻKA 1 — browser_cookie3: czyta zalogowaną sesję FB z Twojego Chrome (Mac/Linux — zero logowania).
+  ŚCIEŻKA 2 — DEDYKOWANY profil: gdy ścieżka 1 padnie (nowy Chrome ≥127 na Windows szyfruje
+              ciasteczka App-Bound Encryption → browser_cookie3 ich nie odczyta). Wtedy narzędzie
+              używa własnego, oddzielnego profilu Chrome — logujesz się do FB RAZ (`--login`),
+              potem działa headless. Nie rusza Twojego codziennego Chrome (brak locka), a Chrome
+              sam odszyfrowuje swój profil (ABE nieistotne).
 
-Metoda (wzorzec repo thanh2004nguyen/facebook-group-scraper, 2025-06):
-  1. browser_cookie3 czyta zalogowaną sesję FB z Chrome (bezobsługowo).
-  2. seleniumbase Driver(uc=True) — undetected, wstrzykuje cookies.
-  3. goto grupy → scroll → harvest postów z `div[data-ad-rendering-role='story_message']`.
-Discovery grup: DuckDuckGo (keyless), żeby nie palić requestów FB na szukaniu.
-
-Kontrakt sygnału (zgodny z dossier-niszy.py): {text, src, autor, score, match}.
+⚠️ OSTRZEŻENIE: automat na ZALOGOWANYM koncie FB łamie regulamin FB → ryzyko blokady konta. Opcjonalny.
+Discovery grup: DuckDuckGo (keyless). Kontrakt sygnału: {text, src, autor, score, match}.
 
 Użycie:
-  fb_keyless.py --grupa "https://www.facebook.com/groups/<id>" [--max-postow 40]
+  fb_keyless.py --login                          # JEDNORAZOWO: otwiera okno, zaloguj się do FB
   fb_keyless.py --nisza "fizjoterapia" [--max-grup 3] [--max-postow 40]
+  fb_keyless.py --grupa "https://www.facebook.com/groups/<id>"
 """
 try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
     import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
 except Exception:
     pass
-import argparse, html, json, re, sys, time, urllib.parse, urllib.request
+import argparse, json, re, sys, time, urllib.parse, urllib.request
+from pathlib import Path
 
 POST_SEL = "div[data-ad-rendering-role='story_message']"
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
       "(KHTML, like Gecko) Version/17.0 Safari/605.1.15")
+# Dedykowany profil Chrome TYLKO dla tego narzędzia (oddzielny od codziennego Chrome usera).
+PROFILE_DIR = Path.home() / ".config" / "dossier-niszy-keyless" / "fb-profile"
 
 
 def _fb_cookies():
-    """Zalogowana sesja FB z Chrome (bezobsługowo). Zwraca (lista_cookies, zalogowany?).
-    KAŻDY błąd (brak Chrome, nie da się odszyfrować ciasteczek na Windows, brak browser_cookie3)
-    → ([], False) = traktuj jak 'nie zalogowany'; kanał zostanie po cichu pominięty, nie wywali."""
+    """ŚCIEŻKA 1: zalogowana sesja FB z Chrome przez browser_cookie3. (lista_cookies, zalogowany?).
+    Każdy błąd (brak Chrome, App-Bound Encryption na Windows, brak browser_cookie3) → ([], False)."""
     try:
         import browser_cookie3 as bc3
         cj = bc3.chrome(domain_name="facebook.com")
@@ -41,6 +44,14 @@ def _fb_cookies():
         return out, ("c_user" in have and "xs" in have)
     except Exception:
         return [], False
+
+
+def _logged_in(d):
+    """Czy w aktywnym profilu jest zalogowana sesja FB (cookie c_user)."""
+    try:
+        return any(c.get("name") == "c_user" for c in d.get_cookies())
+    except Exception:
+        return False
 
 
 def discover_groups(nisza, n=3):
@@ -87,41 +98,83 @@ def scrape_group(d, group_url, max_posts=40, max_scroll=40):
     return posts
 
 
-def run(group_urls, nisza_label, max_posts, headless=True):
-    from seleniumbase import Driver
-    cookies, logged = _fb_cookies()
-    if not logged:
-        return [], ("nie udało się odczytać sesji FB z Chrome — kanał pominięty. "
-                    "Najczęściej: nowy Chrome na Windows (≥127) szyfruje ciasteczka i auto-odczyt nie działa; "
-                    "rzadziej: brak zalogowania w Chrome. Alternatywa: własny klucz Apify.")
+def _harvest(d, group_urls, nisza_label, max_posts):
     out, log = [], []
-    d = Driver(uc=True, headless=headless, incognito=False)
+    for url in group_urls:
+        try:
+            posts = scrape_group(d, url, max_posts)
+        except Exception as e:
+            log.append(f"{url[-30:]}: błąd {str(e)[:40]}"); continue
+        for p in posts:
+            out.append({"text": p[:1200], "src": f"FB grupa {url.rstrip('/').split('/')[-1][:20]}",
+                        "autor": None, "score": None, "match": nisza_label})
+        log.append(f"{url[-30:]}: {len(posts)} postów")
+    return out, ("; ".join(log) if log else None)
+
+
+def login(timeout=200):
+    """JEDNORAZOWO: otwiera WIDOCZNE okno Chrome na dedykowanym profilu, czeka aż user zaloguje się
+    do FB (wykryje cookie c_user), zapisuje profil, zamyka. Potem `run()` działa headless."""
+    from seleniumbase import Driver
+    PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+    d = Driver(uc=True, headless=False, user_data_dir=str(PROFILE_DIR))
     try:
         d.get("https://www.facebook.com/")
-        for c in cookies:
-            try:
-                d.add_cookie(c)
-            except Exception:
-                pass
-        for url in group_urls:
-            try:
-                posts = scrape_group(d, url, max_posts)
-            except Exception as e:
-                log.append(f"{url[-30:]}: błąd {str(e)[:50]}"); continue
-            for p in posts:
-                out.append({"text": p[:1200], "src": f"FB grupa {url.rstrip('/').split('/')[-1][:20]}",
-                            "autor": None, "score": None, "match": nisza_label})
-            log.append(f"{url[-30:]}: {len(posts)} postów")
+        print("Otworzyłem okno Facebooka — zaloguj się. Czekam do ~3 minut…", file=sys.stderr)
+        for _ in range(int(timeout / 2)):
+            if _logged_in(d):
+                return True
+            time.sleep(2)
+        return False
     finally:
         try:
             d.quit()
         except Exception:
             pass
-    return out, ("; ".join(log) if log else None)
+
+
+LOGIN_HINT = ("FB: zaloguj się RAZ w dedykowanym profilu — uruchom: python bin/fb_keyless.py --login "
+              "(otworzy okno, zaloguj się do Facebooka; potem zbieranie działa samo).")
+
+
+def run(group_urls, nisza_label, max_posts, headless=True):
+    """ŚCIEŻKA 1 (browser_cookie3) → fallback ŚCIEŻKA 2 (dedykowany profil)."""
+    from seleniumbase import Driver
+    cookies, logged = _fb_cookies()
+    if logged:  # Mac/Linux: wstrzyknij ciasteczka do świeżego profilu
+        d = Driver(uc=True, headless=headless, incognito=False)
+        try:
+            d.get("https://www.facebook.com/")
+            for c in cookies:
+                try:
+                    d.add_cookie(c)
+                except Exception:
+                    pass
+            return _harvest(d, group_urls, nisza_label, max_posts)
+        finally:
+            try:
+                d.quit()
+            except Exception:
+                pass
+    # Windows/ABE: dedykowany profil (wymaga jednorazowego --login)
+    PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+    d = Driver(uc=True, headless=headless, user_data_dir=str(PROFILE_DIR))
+    try:
+        d.get("https://www.facebook.com/")
+        time.sleep(3)
+        if not _logged_in(d):
+            return [], LOGIN_HINT
+        return _harvest(d, group_urls, nisza_label, max_posts)
+    finally:
+        try:
+            d.quit()
+        except Exception:
+            pass
 
 
 def main():
-    ap = argparse.ArgumentParser(description="FB grupy keyless — auto-cookies + seleniumbase UC (OPT-IN, ryzyko banu konta)")
+    ap = argparse.ArgumentParser(description="FB grupy keyless — browser_cookie3 / dedykowany profil seleniumbase UC (OPT-IN, ryzyko banu konta)")
+    ap.add_argument("--login", action="store_true", help="JEDNORAZOWO: otwórz okno i zaloguj się do FB (dedykowany profil)")
     ap.add_argument("--grupa", help="bezpośredni URL grupy")
     ap.add_argument("--nisza", help="temat — discovery grup przez DuckDuckGo")
     ap.add_argument("--max-grup", type=int, default=3)
@@ -129,23 +182,30 @@ def main():
     ap.add_argument("--widoczna", action="store_true")
     ap.add_argument("--out-file")
     a = ap.parse_args()
+    if a.login:
+        try:
+            ok = login()
+        except Exception as e:
+            print(json.dumps({"ok": False, "msg": f"Logowanie nie wystartowało: {str(e)[:100]}"}, ensure_ascii=False)); return
+        print(json.dumps({"ok": ok, "msg": ("Zalogowano — profil FB zapisany, gotowe." if ok
+                          else "Nie wykryto logowania w czasie. Spróbuj ponownie: --login")}, ensure_ascii=False))
+        return
     if a.grupa:
         urls, label = [a.grupa], (a.nisza or a.grupa)
     elif a.nisza:
         urls, label = discover_groups(a.nisza, a.max_grup), a.nisza
     else:
-        print(json.dumps({"error": "podaj --grupa albo --nisza"})); sys.exit(2)
+        print(json.dumps({"error": "podaj --grupa albo --nisza (albo --login)"})); sys.exit(2)
     if not urls:
         print(json.dumps({"n": 0, "log": "brak grup z DuckDuckGo", "sygnaly": []}, ensure_ascii=False)); return
     try:
         out, log = run(urls, label, a.max_postow, headless=not a.widoczna)
     except Exception as e:
-        # Graceful skip — Facebook NIGDY nie wywala całego researchu (brak Chrome/seleniumbase/sesji FB).
+        # Graceful skip — Facebook NIGDY nie wywala całego researchu.
         print(json.dumps({"n": 0, "log": f"Facebook pominięty: {str(e)[:80]}", "sygnaly": []}, ensure_ascii=False))
         return
     res = {"n": len(out), "grupy": urls, "log": log, "sygnaly": out}
     if a.out_file:
-        from pathlib import Path
         Path(a.out_file).write_text(json.dumps(res, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(res, ensure_ascii=False, indent=2))
 

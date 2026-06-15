@@ -525,13 +525,19 @@ def fb_pains(nisza, queries, raw_limit=RAW_LIMIT, n_groups=N_FB_GROUPS):
         return [], "kanał FB wyłączony przez usera (--no-fb)"
     n_groups = max(1, min(6, _ceil_div(raw_limit, 15)))  # głębokość steruje liczbą grup
     fk = _load_sibling("fb_keyless.py", "fb_keyless")
+    note = None
     try:
         groups = fk.discover_groups(nisza, n=n_groups)
-        out, _log = fk.run(groups, nisza, max_posts=max(10, raw_limit // max(1, len(groups)))) if groups else ([], None)
+        if groups:
+            out, note = fk.run(groups, nisza, max_posts=max(10, raw_limit // max(1, len(groups))))
+        else:
+            out, note = [], "brak grup z DuckDuckGo"
     except Exception:
         out = []
     if out:
         return out[:raw_limit], None
+    if note:  # np. „zaloguj się raz: --login" — pokaż userowi zamiast cichego fallbacku Apify
+        return [], note
     return _fb_apify(nisza, queries, raw_limit, n_groups)  # L3: własny Apify usera
 
 
