@@ -74,19 +74,52 @@ def discover_groups(nisza, n=3):
     return out
 
 
+# Ekstrakcja postów metodą 2026 (wzorzec belia-it/facebook-scraper): kontener [role="feed"] →
+# per element: tekst z [data-ad-rendering-role="story_message"], a w razie braku sklejone [dir="auto"].
+_FEED_JS = r"""
+const out = [];
+const feed = document.querySelector('[role="feed"]');
+const items = feed ? Array.from(feed.children)
+                   : Array.from(document.querySelectorAll('div[data-ad-rendering-role="story_message"]'));
+for (const it of items) {
+  let txt = "";
+  const sm = it.querySelector ? it.querySelector('[data-ad-rendering-role="story_message"]') : null;
+  const self = (it.matches && it.matches('[data-ad-rendering-role="story_message"]')) ? it : null;
+  const body = sm || self;
+  if (body) {
+    txt = (body.innerText || "").trim();
+  } else if (it.querySelectorAll) {
+    const s = new Set();
+    for (const b of it.querySelectorAll('[dir="auto"]')) {
+      const t = (b.innerText || "").trim();
+      if (t && t.length > 3 && !s.has(t)) { s.add(t); txt += t + "\n"; }
+    }
+    txt = txt.trim();
+  }
+  if (txt.length > 25) out.push(txt.slice(0, 1500));
+}
+return out;
+"""
+
+
 def scrape_group(d, group_url, max_posts=40, max_scroll=40):
-    """Scroll + harvest postów grupy (story_message). d = już uwierzytelniony Driver."""
+    """Scroll + harvest postów grupy metodą 2026: czeka na [role="feed"], wyciąga teksty z
+    story_message / [dir="auto"]. d = już uwierzytelniony Driver."""
     d.get(group_url + ("?hl=pl" if "?" not in group_url else ""))
-    time.sleep(5)
+    time.sleep(4)
+    try:  # FB doładowuje feed Reactem — poczekaj na kontener przed ekstrakcją
+        d.wait_for_element('[role="feed"]', timeout=25)
+    except Exception:
+        pass
     posts, seen, idle = [], set(), 0
     for _ in range(max_scroll):
         n0 = len(seen)
-        for e in d.find_elements("css selector", POST_SEL):
-            try:
-                t = (e.text or "").strip()
-            except Exception:
-                continue
-            if t and len(t) > 25 and t not in seen:
+        try:
+            found = d.execute_script(_FEED_JS) or []
+        except Exception:
+            found = []
+        for t in found:
+            if t and t not in seen:
                 seen.add(t); posts.append(t)
         if len(posts) >= max_posts:
             break
@@ -95,7 +128,7 @@ def scrape_group(d, group_url, max_posts=40, max_scroll=40):
             break
         d.execute_script("window.scrollTo(0, document.body.scrollHeight)")
         time.sleep(2.2)
-    return posts
+    return posts[:max_posts]
 
 
 def _harvest(d, group_urls, nisza_label, max_posts):
