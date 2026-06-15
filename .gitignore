@@ -10,6 +10,17 @@ venv/
 .dossier-niszy-keyless.env
 .radar-niszy.env
 
+# Artefakty seleniumbase / sterowniki przeglądarki (tworzą się przy uruchomieniu)
+downloaded_files/
+bin/downloaded_files/
+drivers/
+latest_logs/
+assets/
+*.lock
+chromedriver*
+geckodriver*
+uc_driver*
+
 # System
 .DS_Store
 Thumbs.db

@@ -91,7 +91,9 @@ def run(group_urls, nisza_label, max_posts, headless=True):
     from seleniumbase import Driver
     cookies, logged = _fb_cookies()
     if not logged:
-        return [], "brak zalogowanej sesji FB w Chrome (zaloguj się w przeglądarce) — kanał pominięty"
+        return [], ("nie udało się odczytać sesji FB z Chrome — kanał pominięty. "
+                    "Najczęściej: nowy Chrome na Windows (≥127) szyfruje ciasteczka i auto-odczyt nie działa; "
+                    "rzadziej: brak zalogowania w Chrome. Alternatywa: własny klucz Apify.")
     out, log = [], []
     d = Driver(uc=True, headless=headless, incognito=False)
     try:
