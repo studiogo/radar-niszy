@@ -13,6 +13,10 @@ Kontrakt sygnalu (zgodny z dossier-niszy.py): {text, src, autor, score}.
 Uzycie:
   youtube_keyless.py --frazy "automatyzacja firmy;agent ai" [--n-wideo 3] [--max-kom 15] [--wszystkie]
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import argparse, json, re, subprocess, sys
 from pathlib import Path
 

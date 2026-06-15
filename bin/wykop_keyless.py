@@ -16,6 +16,10 @@ Uzycie:
   wykop_keyless.py --tag sztucznainteligencja [--strony 2] [--limit 60] [--out-file /tmp/x.json]
   wykop_keyless.py --nisza "sztuczna inteligencja"   # tag wyprowadzony z niszy
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import argparse, json, re, sys, time, urllib.request, urllib.error
 from pathlib import Path
 

@@ -10,6 +10,10 @@ Ten skrypt robi tylko mechanikę (sam NIE pyta):
 Klucze NIGDY nie są w kodzie — trafiają wyłącznie do lokalnego configu usera
 (`config.py`: warstwa 3 plik .env chmod 600 lub warstwa 4 Keychain na macu).
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import argparse
 import importlib.util
 import json

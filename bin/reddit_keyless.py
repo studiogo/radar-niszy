@@ -18,6 +18,10 @@ Kontrakt sygnalu (zgodny z dossier-niszy.py): {text, src, autor, score, pid, sub
 Uzycie:
   reddit_keyless.py --frazy "adhd focus;procrastination" [--subreddity ADHD,productivity] [--limit 60]
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import argparse, html as _html, json, re, sys, time, urllib.parse, urllib.request, urllib.error
 import xml.etree.ElementTree as ET
 from pathlib import Path

@@ -10,6 +10,10 @@ ze strony wyszukiwarki Play (HTML, SSR) — zero klucza.
 Uzycie:
   gplay_keyless.py --fraza "automatyzacja" [--n 8]
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import argparse, json, re, urllib.parse, urllib.request
 from pathlib import Path
 

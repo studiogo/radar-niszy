@@ -10,6 +10,10 @@ Uzycie:
   web_keyless.py --q "automatyzacja małej firmy" [--n 12]
 Wyjście JSON: {n, wyniki:[{tytul, url, opis}]}
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import argparse, html, json, re, urllib.parse, urllib.request
 
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "

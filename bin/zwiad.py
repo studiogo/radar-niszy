@@ -13,6 +13,10 @@ dostępny w etapie drążenia.
 Użycie:
   zwiad.py --nisza "<pod-nisza>" --klucze "rdzeń1,rdzeń2" --frazy "fraza1;fraza2" [--probka 10]
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import argparse, json, sys, tempfile, importlib.util
 from pathlib import Path
 

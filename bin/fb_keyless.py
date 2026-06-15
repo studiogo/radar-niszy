@@ -17,6 +17,10 @@ Użycie:
   fb_keyless.py --grupa "https://www.facebook.com/groups/<id>" [--max-postow 40]
   fb_keyless.py --nisza "fizjoterapia" [--max-grup 3] [--max-postow 40]
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import argparse, html, json, re, sys, time, urllib.parse, urllib.request
 
 POST_SEL = "div[data-ad-rendering-role='story_message']"

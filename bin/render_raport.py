@@ -23,6 +23,10 @@ Użycie:
   render_raport.py --demo --open
   render_raport.py --data /tmp/agg.json --out-file /tmp/raport.html --open
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import argparse, html, json, os, subprocess, sys, tempfile
 from pathlib import Path
 

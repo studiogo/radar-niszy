@@ -19,6 +19,10 @@ Kontrakt sygnału (zgodny z dossier-niszy.py): {text, src, autor, score, match}.
 Użycie:
   maps_keyless.py --nisza "fizjoterapia" --location "Warszawa" [--max-firm 8] [--max-rec 200] [--widoczna]
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import argparse, json, sys, time
 from pathlib import Path
 

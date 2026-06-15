@@ -11,6 +11,10 @@ Zasada (D-2026-06-14-01): kluczy Łukasza nie shippujemy. Trends/oceny Maps tylk
 user poda WŁASNY klucz SerpApi (fallback po stronie badaj-popyt). Bez klucza: popyt opiera
 się na autocomplete (intencja) + kanałach bólu — to wystarcza na werdykt „jest/słaby popyt".
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import argparse, http.cookiejar, json, time, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
 

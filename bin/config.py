@@ -15,6 +15,10 @@ Priorytet (warstwa wyżej WYGRYWA):
 warstw. Wersja do rozdania nie niesie kluczy Łukasza (te żyją w jego Keychain,
 nie w plikach skilla).
 """
+try:  # Windows: konsola bywa cp1250 — wymuś UTF-8, by emoji w wyjściu nie wywalały printów
+    import sys as _s; _s.stdout.reconfigure(encoding="utf-8"); _s.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 import os
 import subprocess
 import sys
