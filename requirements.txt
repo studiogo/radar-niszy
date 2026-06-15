@@ -1,0 +1,13 @@
+# dossier-niszy-keyless — zależności OPCJONALNE.
+# Rdzeń keyless (Wykop, Reddit, App Store, Popyt, Web/SERP) działa na SAMEJ bibliotece
+# standardowej Pythona — bez instalacji czegokolwiek. Poniższe instaluj tylko pod kanały,
+# z których chcesz korzystać. Kreator (bin/onboarding.py --install ...) zrobi to za zgodą.
+
+yt-dlp               # YouTube — wyszukiwanie + komentarze (wymaga też 'deno' spoza pip)
+google-play-scraper  # Google Play — recenzje aplikacji
+seleniumbase         # Google Maps (recenzje firm) + Facebook (grupy) — tryb headless; wymaga przeglądarki Chrome
+browser-cookie3      # Facebook — odczyt zalogowanej sesji z Chrome
+
+# Spoza pip (instalacja systemowa):
+#   deno    — YouTube (challenge JS w yt-dlp):  mac 'brew install deno' · win 'winget install DenoLand.Deno' · linux 'curl -fsSL https://deno.land/install.sh | sh'
+#   Chrome  — Maps + Facebook:  https://www.google.com/chrome/
