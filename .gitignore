@@ -21,6 +21,10 @@ chromedriver*
 geckodriver*
 uc_driver*
 
+# Dokumenty wewnętrzne (stan projektu, notatki dev) — NIE do publicznego repo
+PROJEKT-STAN.md
+RAPORT-BRIEF-DESIGNERA.md
+
 # System
 .DS_Store
 Thumbs.db
