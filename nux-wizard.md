@@ -9,8 +9,12 @@
 > **Zasady prowadzenia:**
 > - Jeden krok = jedno pytanie. Czekaj na odpowiedź, nie wysyłaj wszystkiego naraz.
 > - Skill DZIAŁA bez kreatora (tor keyless). Kreator tylko dostraja — nie strasz, nie blokuj.
-> - User jest NIETECHNICZNY. Zero żargonu bez wyjaśnienia. „klucz API" = „hasło, którym
->   program loguje się do cudzej usługi".
+> - User jest NIETECHNICZNY. **KOMUNIKATY DO NIEGO = ZERO ŻARGONU.** W cytatach do usera NIGDY
+>   nie pisz: „skill", „kanał", „keyless", „API"/„klucz API", „config", „yt-dlp", „deno", „token",
+>   „sygnały", „bóle", „wolumen". Zamiast tego: „narzędzie", „źródło", „bez kont", „dodatek",
+>   „ustawienia", „opinie/problemy". Jeśli MUSISZ użyć trudnego słowa — wyjaśnij od razu w nawiasie
+>   prostymi słowami (np. „klucz = hasło dostępu do usługi"). Każdy komunikat ma zrozumieć osoba
+>   zupełnie nietechniczna — babcia, nie programista.
 > - Klucze należą do USERA. Nigdy nie podajesz żadnych swoich/cudzych kluczy.
 > - Na końcu KAŻDY wybór trafia do `onboarding.py --save`.
 
@@ -54,10 +58,10 @@ Nie idź do KROK 1, dopóki `<PY> --version` nie zwróci „Python 3.x".
 
 Powiedz (1-2 zdania, własnymi słowami w tym duchu):
 
-> „Cześć! To pierwszy raz, więc szybko ustawimy narzędzie pod Ciebie — 4 krótkie pytania.
-> Narzędzie szuka realnych problemów ludzi w wybranej niszy (Wykop, Reddit, YouTube,
-> opinie w sklepach, Google). **Działa od razu, za darmo, bez żadnych kont.** Te pytania
-> tylko dostroją je do Twojego komputera."
+> „Cześć! To pierwsze uruchomienie, więc w 4 krótkich pytaniach ustawię narzędzie pod Ciebie.
+> Ono wyszukuje, na co ludzie narzekają i czego szukają w wybranym temacie (zagląda m.in. na
+> Wykop, Reddita, YouTube, do opinii w sklepach i do Google). **Działa od razu, za darmo, bez
+> zakładania żadnych kont.** Te pytania tylko dopasują je do Twojego komputera."
 
 Nie pytaj nic jeszcze. Przejdź do KROK 2.
 
@@ -69,13 +73,14 @@ Uruchom:
 ```
 Z JSON-a zbuduj userowi PROSTĄ mapę (plain Polish), np.:
 
-> „Sprawdziłem Twój komputer. **Działa od ręki:** Wykop, Reddit, App Store, popyt (trendy),
-> wyszukiwarka. **Wymaga doinstalowania:** YouTube (brak: yt-dlp, deno), Facebook (brak: …)."
+> „Sprawdziłem Twój komputer. **Działa od ręki:** Wykop, Reddit, App Store, trendy Google,
+> wyszukiwarka. **Wymaga doinstalowania paru darmowych dodatków** (zrobię to za Ciebie): np.
+> żeby zadziałał YouTube albo Facebook."
 
 Jeśli `missing_pip` NIEpuste → zadaj **PYTANIE A**:
 
-> „Chcesz, żebym doinstalował brakujące dodatki jedną komendą? (to bezpieczne, darmowe)
-> — [tak / nie, zostawmy keyless]"
+> „Chcesz, żebym teraz doinstalował te brakujące dodatki? Są darmowe i bezpieczne, zajmie
+> chwilę. — [tak, doinstaluj / nie, zostawmy bez nich]"
 
 - **tak** → uruchom `onboarding.py --install <lista z missing_pip>`, potem ponów `--check --json` i pokaż zaktualizowaną mapę.
 - **nie** → idź dalej; te kanały po prostu będą pomijane.
@@ -84,28 +89,28 @@ Dla `missing_other` (deno, Chrome — nie z pip) pokaż komendę z `install_cmds
 
 ## KROK 3 — Facebook (domyślnie WŁĄCZONY) — PYTANIE B
 
-Wyjaśnij szczerze i zadaj pytanie:
+Zadaj pytanie spokojnym tonem (bez straszenia):
 
-> „Narzędzie potrafi czytać posty z **publicznych grup na Facebooku** — to bardzo dobre
-> źródło problemów ludzi. Domyślnie jest **włączone** i korzysta z Twojego konta, na którym
-> jesteś zalogowany w przeglądarce Chrome.
-> ⚠️ Uwaga ważna: automat działający na Twoim koncie łamie regulamin Facebooka — jest małe
-> ryzyko, że Facebook zablokuje konto. Widać tylko grupy publiczne/widoczne, nie prywatne.
-> Zostawiamy Facebook włączony czy wolisz go wyłączyć? — [zostaw włączony / wyłącz]"
+> „Narzędzie może też zaglądać do **publicznych grup na Facebooku** — to dobre źródło
+> problemów ludzi. Czyta z Twojego konta zalogowanego w Chrome, więc wcześniej musisz być
+> na nim zalogowany w przeglądarce. Widzi tylko grupy publiczne/widoczne.
+> Drobna uwaga: automatyczne przeszukiwanie Facebooka jest niezgodne z jego regulaminem —
+> jest **niewielkie ryzyko blokady konta**, głównie gdybyś używał narzędzia bardzo intensywnie.
+> Włączyć szukanie na Facebooku? — [tak / nie]"
 
-- **zostaw** → `FB_ENABLED=true`
-- **wyłącz** → `FB_ENABLED=false`
+- **tak** → `FB_ENABLED=true`
+- **nie** → `FB_ENABLED=false`
 
 ## KROK 4 — Google Maps + miasto (best-effort) — PYTANIE C
 
 Wyjaśnij i zapytaj:
 
-> „Narzędzie może też zbierać **negatywne opinie (≤3★) o firmach z Google Maps** — to skargi
-> klientów, czyli gotowe bóle. Włącza się samo, jeśli masz przeglądarkę Chrome.
-> ⚠️ Szczerze: w naszych testach wyciągało **~10 najgorszych opinii na firmę** (na Twoim
-> komputerze może być więcej — nie sprawdziliśmy). Wolumen robimy liczbą firm, nie głębią.
-> Potrzebuję **miasta**, w którym szukać firm (np. Warszawa). Podaj miasto, albo napisz
-> „pomiń" — wtedy Maps zostanie nieaktywne. — [miasto / pomiń / wyłącz całkiem]"
+> „Narzędzie może też zebrać **słabe oceny firm z Map Google (do 3 gwiazdek)** — to skargi
+> klientów, czyli gotowe problemy do rozwiązania. Włącza się samo, jeśli masz przeglądarkę
+> Chrome. Szczerze: w testach wyciągało **około 10 najgorszych opinii z jednej firmy** (u Ciebie
+> może być więcej). Im więcej firm sprawdzimy, tym więcej opinii zbierzemy.
+> Potrzebuję tylko **miasta**, w którym mam szukać firm (np. Warszawa). Podaj miasto albo napisz
+> „pomiń". — [miasto / pomiń / wyłącz]"
 
 - podane miasto → `MAPS_ENABLED=true`, `LOCATION=<miasto>`
 - „pomiń" → `MAPS_ENABLED=true`, bez `LOCATION` (kanał uśpiony do czasu podania miasta)
@@ -115,9 +120,10 @@ Wyjaśnij i zapytaj:
 
 Wyjaśnij, że to NIEobowiązkowe:
 
-> „Ostatnia rzecz, całkowicie opcjonalna. Narzędzie działa bez żadnych kont. Ale jeśli MASZ
-> własne darmowe klucze do paru usług, robi się odporniejsze (mniej blokad) i dokładniejsze.
-> Masz jakieś własne klucze, czy lecimy bez? — [mam klucze / bez kluczy]"
+> „Ostatnia rzecz, całkowicie nieobowiązkowa. Narzędzie działa bez żadnych kont. Ale jeśli masz
+> własne **klucze dostępu** (to takie hasła do paru usług, np. SerpApi albo Tavily), mogę je
+> dodać — wtedy narzędzie rzadziej się blokuje i jest dokładniejsze.
+> Masz takie hasła, czy lecimy bez nich? — [mam / bez nich]"
 
 - **bez kluczy** → nic nie zbieraj, idź do KROK 6.
 - **mam klucze** → pokaż tabelę (z `CONFIGURATION.md`) co do czego służy i gdzie wziąć darmowy:
@@ -150,9 +156,9 @@ Złóż JSON ze WSZYSTKICH zebranych decyzji i zapisz:
 
 Powiedz, że gotowe, i zaproś do startu:
 
-> „Gotowe — ustawienia zapisane. Możemy zacząć. Podaj **obszar albo niszę**, którą mam
-> przebadać (np. „automatyzacja małej firmy", „AI dla nauczycieli"), a ja zbiorę sygnały
-> ze wszystkich aktywnych kanałów i zrobię raport."
+> „Gotowe — ustawienia zapisane. Możemy zacząć. Napisz, jaki **temat albo branżę** mam
+> przebadać (np. „automatyzacja małej firmy", „AI dla nauczycieli"), a ja poszukam w
+> internecie, na co ludzie narzekają, i zrobię z tego raport."
 
 Dalej działasz wg głównego procesu skilla (`SKILL.md`: ETAP 0 → … → raport). Kreatora
 **nie powtarzasz** przy kolejnych uruchomieniach (jest `SETUP_COMPLETE=true`).
